@@ -7,7 +7,7 @@
     <style>
         body {
             font-family: 'Arial', sans-serif;
-            background-color: #121212;
+            background-color: #000000;
             color: #e0e0e0;
             margin: 0;
             padding: 0;
@@ -26,7 +26,7 @@
             top: 0;
             left: -340px; /* 패널 너비 + 패딩 */
             width: 300px;
-            height: calc(100vh - 150px); /* 패널 하단에 50px 여유 공간 추가 */
+            height: calc(100vh); /* 패널 하단에 50px 여유 공간 추가 */
             background-color: #1e1e1e;
             padding: 20px;
             overflow-y: auto;
@@ -40,7 +40,7 @@
             top: 10px;
             left: 10px;
             z-index: 1001;
-            background-color: #333;
+            background-color: rgba(51, 51, 51, 0.7);
             border: none;
             padding: 10px;
             cursor: pointer;
@@ -62,8 +62,14 @@
             transition: background-color 0.3s ease;
         }
         #settingsToggle:hover span {
-            background-color: #fff;
+            background-color: #e0e0e0;
         }
+
+        #settingsToggle.open {
+            color: #ffffff; /* X 표시의 색상 */
+            font-size: 24px; /* X 표시의 크기 */
+        }
+
         .schedule {
             margin-bottom: 20px;
             padding: 15px;
@@ -155,7 +161,7 @@
             align-items: center;
         }
         #statusMessage {
-            margin-top: 2px;
+            margin-top: 5px;
             text-align: center;
             color: #4CAF50;
         }
@@ -319,10 +325,12 @@
                     console.log('Settings toggle clicked');
                     isPanelOpen = !isPanelOpen;
                     settingsPanel.style.left = isPanelOpen ? '0' : '-340px'; // 패널 너비 + 패딩
-                    settingsToggle.style.left = isPanelOpen ? '320px' : '10px';
+                    settingsToggle.style.left = isPanelOpen ? '350px' : '10px';
                     settingsToggle.innerHTML = isPanelOpen ? 
                         '&times;' : 
                         '<span></span><span></span><span></span>';
+                    settingsToggle.classList.toggle('open');
+
                 });
             } else {
                 console.error('Settings toggle or panel not found');
@@ -412,7 +420,7 @@
 	                <input type="number" id="fontSizeInput${index}" class="font-size-input" value="${settings.fontSize || '110'}" placeholder="폰트 크기" onchange="markUnsaved(${index})" 	/>
 	            </div>
 	            <div class="row">
-	                <button onclick="saveSettings(${index})" class="save-button">저장</button>
+	                <button onclick="saveSettings(${index})" class="save-button">설정저장</button>
 	                <button onclick="previewText(${index})" class="preview-button">미리보기</button>
 	            </div>
 	            <div id="saveStatusMessage${index}" class="unsaved">저장되지 않음</div>
@@ -427,7 +435,7 @@
 	function saveSettings(index) {
 		saveCurrentSettings();
 		const statusMessage = document.getElementById(`saveStatusMessage${index}`);
-		statusMessage.textContent = '저장됨';
+		statusMessage.textContent = '설정 저장됨';
 		statusMessage.classList.remove('unsaved');
 		statusMessage.classList.add('saved');
 	}
@@ -484,82 +492,122 @@
         });
 
         function previewText(index) {
-            const text = document.getElementById(`textInput${index}`).value;
-            const color = document.getElementById(`colorInput${index}`).value;
-            const fontSize = document.getElementById(`fontSizeInput${index}`).value;
-            const font = document.getElementById(`fontInput${index}`).value;
-            const colorOption = document.getElementById(`colorEffect${index}`).value;
-            const speedInput = document.getElementById(`speedInput${index}`);
-            const speed = speedInput ? parseInt(speedInput.value) : 10;
+            const settings = {
+                text: document.getElementById(`textInput${index}`).value,
+                color: document.getElementById(`colorInput${index}`).value,
+                fontSize: document.getElementById(`fontSizeInput${index}`).value,
+                font: document.getElementById(`fontInput${index}`).value,
+                colorEffect: document.getElementById(`colorEffect${index}`).value,
+                speed: document.getElementById(`speedInput${index}`)?.value || '100'
+            };
 
             const display = document.getElementById('display');
-            display.innerHTML = text.replace(/\n/g, '<br>'); // 줄바꿈을 <br> 태그로 변환
-            display.style.fontSize = fontSize ? `${fontSize}px` : '2rem';
-            display.style.fontFamily = font;
-            display.style.fontWeight = 'bold'; // 텍스트를 굵게
-            display.style.transform = 'scaleX(0.7)'; // 장평을 85으로 줄임
-            applyColorEffect(display, colorOption, speed, color);
+            applyTextEffect(display, settings);
+        }
+
+        function applyTextEffect(display, settings) {
+            display.innerHTML = settings.text.replace(/\n/g, '<br>');
+            display.style.fontSize = settings.fontSize ? `${settings.fontSize}px` : '2rem';
+            display.style.fontFamily = settings.font;
+            display.style.fontWeight = 'bold';
+            display.style.transform = 'scaleX(0.7)';
+            applyColorEffect(display, settings.colorEffect, settings.speed, settings.color);
         }
 
         function applyColorEffect(display, colorOption, speed, color) {
-            // Clear any existing intervals
             if (display.colorInterval) {
                 clearInterval(display.colorInterval);
             }
 
+            // 스타일 초기화
+            display.style.transition = ''
+            display.style.color = color
+            display.style.backgroundImage = 'none'
+            display.style.backgroundClip = 'initial'
+            display.style.webkitBackgroundClip = 'initial'
+            display.style.textFillColor = 'initial'
+            display.style.webkitTextFillColor = 'initial'
+
+            const animationSpeed = Math.max(50, parseInt(speed) || 100);
+
             switch (colorOption) {
                 case 'default':
-                    display.style.color = color;
+                    // 기본 색상 유지
                     break;
                 case 'rainbow':
-                    let hue = 0;
+                    let rainbowHue = 0;
                     display.colorInterval = setInterval(() => {
-                        display.style.color = `hsl(${hue}, 100%, 50%)`;
-                        hue = (hue + 1) % 360;
-                    }, speed);
+                        display.style.color = `hsl(${rainbowHue}, 100%, 50%)`;
+                        rainbowHue = (rainbowHue + 2) % 360;
+                    }, animationSpeed);
                     break;
                 case 'blink':
                     let isVisible = true;
                     display.colorInterval = setInterval(() => {
                         display.style.color = isVisible ? color : 'transparent';
                         isVisible = !isVisible;
-                    }, speed);
+                    }, animationSpeed * 5);
                     break;
                 case 'random':
                     display.colorInterval = setInterval(() => {
-                        display.style.color = `#${Math.floor(Math.random() * 16777215).toString(16)}`;
-                    }, speed);
+                        const hue = Math.floor(Math.random() * 360);
+                        display.style.color = `hsl(${hue}, 100%, 50%)`;
+                    }, animationSpeed * 2);
                     break;
                 case 'gradient':
                     let gradientHue = 0;
+                    display.style.backgroundClip = 'text';
+                    display.style.webkitBackgroundClip = 'text';
+                    display.style.textFillColor = 'transparent';
+                    display.style.webkitTextFillColor = 'transparent';
                     display.colorInterval = setInterval(() => {
-                        display.style.backgroundImage = `linear-gradient(to right, hsl(${gradientHue}, 100%, 50%), hsl(${(gradientHue + 60) % 360}, 100%, 50%))`;
-                        gradientHue = (gradientHue + 1) % 360;
-                        display.style.webkitBackgroundClip = 'text';
-                        display.style.webkitTextFillColor = 'transparent';
-                    }, speed);
+                        display.style.backgroundImage = `
+                            linear-gradient(
+                                90deg, 
+                                hsl(${gradientHue}, 100%, 50%), 
+                                hsl(${(gradientHue + 120) % 360}, 100%, 50%), 
+                                hsl(${(gradientHue + 240) % 360}, 100%, 50%)
+                            )
+                        `;
+                        gradientHue = (gradientHue + 5) % 360;
+                    }, animationSpeed);
                     break;
                 case 'breath':
-                    let breathHue = 0;
+                    let breathValue = 0;
+                    const baseColor = hexToRgb(color);
                     display.colorInterval = setInterval(() => {
-                        const lightness = 50 + 30 * Math.sin(breathHue);
-                        display.style.color = `hsl(200, 100%, ${lightness}%)`;
-                        breathHue += 0.05;
-                    }, speed);
+                        const intensity = 0.5 + 0.5 * Math.sin(breathValue);
+                        display.style.color = `rgb(
+                            ${Math.round(baseColor.r * intensity)},
+                            ${Math.round(baseColor.g * intensity)},
+                            ${Math.round(baseColor.b * intensity)}
+                        )`;
+                        breathValue += 0.05;
+                    }, animationSpeed);
                     break;
             }
+        }
+
+        // 헥스 색상 코드를 RGB로 변환하는 헬퍼 함수
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : null;
         }
 
         function saveCurrentSettings() {
             for (let i = 0; i < scheduleCount; i++) {
                 scheduleSettings[i] = {
-                    colorEffect: document.getElementById(`colorEffect${i}`)?.value || 'default',
-                    text: document.getElementById(`textInput${i}`)?.value || '',
-                    time: document.getElementById(`timeInput${i}`)?.value || '',
-                    color: document.getElementById(`colorInput${i}`)?.value || '#ffffff',
-                    font: document.getElementById(`fontInput${i}`)?.value || 'Arial',
-                    fontSize: document.getElementById(`fontSizeInput${i}`)?.value || '100',
-                    speed: document.getElementById(`speedInput${i}`)?.value || '500'
+                    colorEffect: document.getElementById(`colorEffect${i}`).value,
+                    text: document.getElementById(`textInput${i}`).value,
+                    time: document.getElementById(`timeInput${i}`).value,
+                    color: document.getElementById(`colorInput${i}`).value,
+                    font: document.getElementById(`fontInput${i}`).value,
+                    fontSize: document.getElementById(`fontSizeInput${i}`).value,
+                    speed: document.getElementById(`speedInput${i}`)?.value || '10'
                 };
             }
         }
@@ -579,12 +627,7 @@
 	            for (const schedule of schedules) {
 	                if (schedule.time === currentTime) {
 	                    const display = document.getElementById('display');
-	                    display.innerHTML = schedule.text.replace(/\n/g, '<br>');
-	                    display.style.fontSize = schedule.fontSize ? `${schedule.fontSize}px` : '2rem';
-	                    display.style.fontFamily = schedule.font;
-	                    display.style.fontWeight = 'bold';
-	                    display.style.transform = 'scaleX(0.7)';
-	                    applyColorEffect(display, schedule.colorEffect, parseInt(schedule.speed), schedule.color);
+	                    applyTextEffect(display, schedule);
 	                    break;
 	                }
 	            }
@@ -593,7 +636,7 @@
 	        for (let i = 0; i < scheduleCount; i++) {
 	            const statusMessage = document.getElementById(`saveStatusMessage${i}`);
 	            if (statusMessage) {
-	                statusMessage.textContent = '저장됨';
+	                statusMessage.textContent = '설정 저장됨';
 	                statusMessage.classList.remove('unsaved');
 	                statusMessage.classList.add('saved');
 	            }
@@ -607,29 +650,45 @@
 	}
 
         function toggleFullscreen() {
-		if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.mozFullScreenElement && !document.msFullscreenElement) {
-		        if (document.documentElement.requestFullscreen) {
-		            document.documentElement.requestFullscreen();
-		        } else if (document.documentElement.webkitRequestFullscreen) { // Chrome, Safari and Opera
-		            document.documentElement.webkitRequestFullscreen();
-		        } else if (document.documentElement.mozRequestFullScreen) { // Firefox
-		            document.documentElement.mozRequestFullScreen();
-		        } else if (document.documentElement.msRequestFullscreen) { // IE/Edge
-		            document.documentElement.msRequestFullscreen();
-		        } else if (document.documentElement.webkitEnterFullscreen) { // 모바일 Safari
-		            document.documentElement.webkitEnterFullscreen();
-		        }
-		    } else {
-		        if (document.exitFullscreen) {
-		            document.exitFullscreen();
-		        } else if (document.webkitExitFullscreen) { // Chrome, Safari and Opera
-		            document.webkitExitFullscreen();
-		        } else if (document.mozCancelFullScreen) { // Firefox
-		            document.mozCancelFullScreen();
-		        } else if (document.msExitFullscreen) { // IE/Edge
-		            document.msExitFullscreen();
-		        }
-                document.getElementById('fullscreenToggle').querySelector('.fullscreen-icon').textContent = '⛶';
+		if (!document.fullscreenElement && 
+		    !document.webkitFullscreenElement && 
+		    !document.mozFullScreenElement && 
+		    !document.msFullscreenElement) {
+		    const docElm = document.documentElement;
+		    if (docElm.requestFullscreen) {
+		        docElm.requestFullscreen();
+		    } else if (docElm.webkitRequestFullscreen) { // Chrome, Safari and Opera
+		        docElm.webkitRequestFullscreen();
+		    } else if (docElm.mozRequestFullScreen) { // Firefox
+		        docElm.mozRequestFullScreen();
+		    } else if (docElm.msRequestFullscreen) { // IE/Edge
+		        docElm.msRequestFullscreen();
+		    } else if (docElm.webkitEnterFullscreen) { // iOS Safari
+		        docElm.webkitEnterFullscreen();
+		    }
+		} else {
+		    if (document.exitFullscreen) {
+		        document.exitFullscreen();
+		    } else if (document.webkitExitFullscreen) { // Chrome, Safari and Opera
+		        document.webkitExitFullscreen();
+		    } else if (document.mozCancelFullScreen) { // Firefox
+		        document.mozCancelFullScreen();
+		    } else if (document.msExitFullscreen) { // IE/Edge
+		        document.msExitFullscreen();
+		    }
+		}
+		updateFullscreenButton();
+	}
+
+        function updateFullscreenButton() {
+            const fullscreenIcon = document.getElementById('fullscreenToggle').querySelector('.fullscreen-icon');
+            if (document.fullscreenElement || 
+                document.webkitFullscreenElement || 
+                document.mozFullScreenElement || 
+                document.msFullscreenElement) {
+                fullscreenIcon.textContent = '⛶';
+            } else {
+                fullscreenIcon.textContent = '⛶';
             }
         }
 
@@ -638,15 +697,6 @@
         document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
         document.addEventListener('mozfullscreenchange', updateFullscreenButton);
         document.addEventListener('MSFullscreenChange', updateFullscreenButton);
-
-        function updateFullscreenButton() {
-            const fullscreenIcon = document.getElementById('fullscreenToggle').querySelector('.fullscreen-icon');
-            if (document.fullscreenElement) {
-                fullscreenIcon.textContent = '⛶';
-            } else {
-                fullscreenIcon.textContent = '⛶';
-            }
-        }
 
         // Initialize the page
         updateScheduleInputs();
