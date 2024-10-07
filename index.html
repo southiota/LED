@@ -609,27 +609,28 @@
 	}
 
         function toggleFullscreen() {
-            if (!document.fullscreenElement) {
-                if (document.documentElement.requestFullscreen) {
-                    document.documentElement.requestFullscreen();
-                } else if (document.documentElement.mozRequestFullScreen) { // Firefox
-                    document.documentElement.mozRequestFullScreen();
-                } else if (document.documentElement.webkitRequestFullscreen) { // Chrome, Safari and Opera
-                    document.documentElement.webkitRequestFullscreen();
-                } else if (document.documentElement.msRequestFullscreen) { // IE/Edge
-                    document.documentElement.msRequestFullscreen();
-                }
-                document.getElementById('fullscreenToggle').querySelector('.fullscreen-icon').textContent = '⛶';
-            } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                } else if (document.mozCancelFullScreen) { // Firefox
-                    document.mozCancelFullScreen();
-                } else if (document.webkitExitFullscreen) { // Chrome, Safari and Opera
-                    document.webkitExitFullscreen();
-                } else if (document.msExitFullscreen) { // IE/Edge
-                    document.msExitFullscreen();
-                }
+		if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.mozFullScreenElement && !document.msFullscreenElement) {
+		        if (document.documentElement.requestFullscreen) {
+		            document.documentElement.requestFullscreen();
+		        } else if (document.documentElement.webkitRequestFullscreen) { // Chrome, Safari and Opera
+		            document.documentElement.webkitRequestFullscreen();
+		        } else if (document.documentElement.mozRequestFullScreen) { // Firefox
+		            document.documentElement.mozRequestFullScreen();
+		        } else if (document.documentElement.msRequestFullscreen) { // IE/Edge
+		            document.documentElement.msRequestFullscreen();
+		        } else if (document.documentElement.webkitEnterFullscreen) { // 모바일 Safari
+		            document.documentElement.webkitEnterFullscreen();
+		        }
+		    } else {
+		        if (document.exitFullscreen) {
+		            document.exitFullscreen();
+		        } else if (document.webkitExitFullscreen) { // Chrome, Safari and Opera
+		            document.webkitExitFullscreen();
+		        } else if (document.mozCancelFullScreen) { // Firefox
+		            document.mozCancelFullScreen();
+		        } else if (document.msExitFullscreen) { // IE/Edge
+		            document.msExitFullscreen();
+		        }
                 document.getElementById('fullscreenToggle').querySelector('.fullscreen-icon').textContent = '⛶';
             }
         }
