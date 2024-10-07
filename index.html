@@ -568,12 +568,10 @@
 	        saveCurrentSettings();
 	        const schedules = scheduleSettings;
 	
-	        // Clear existing intervals
 	        if (window.scheduleInterval) {
 	            clearInterval(window.scheduleInterval);
 	        }
 	
-	        // Set up new interval to check and update text
 	        window.scheduleInterval = setInterval(() => {
 	            const now = new Date();
 	            const currentTime = now.toTimeString().slice(0, 5);
@@ -581,16 +579,17 @@
 	            for (const schedule of schedules) {
 	                if (schedule.time === currentTime) {
 	                    const display = document.getElementById('display');
-	                    display.innerHTML = schedule.text.replace(/\n/g, '<br>'); // 줄바꿈을 <br> 태그로 변환
+	                    display.innerHTML = schedule.text.replace(/\n/g, '<br>');
 	                    display.style.fontSize = schedule.fontSize ? `${schedule.fontSize}px` : '2rem';
 	                    display.style.fontFamily = schedule.font;
-	                    applyColorEffect(display, schedule.colorOption, schedule.speed, schedule.color);
+	                    display.style.fontWeight = 'bold';
+	                    display.style.transform = 'scaleX(0.7)';
+	                    applyColorEffect(display, schedule.colorEffect, parseInt(schedule.speed), schedule.color);
 	                    break;
 	                }
 	            }
-	        }, 1000); // Check every second
+	        }, 1000);
 	
-	        // Update all save status messages to '저장됨'
 	        for (let i = 0; i < scheduleCount; i++) {
 	            const statusMessage = document.getElementById(`saveStatusMessage${i}`);
 	            if (statusMessage) {
@@ -600,7 +599,6 @@
 	            }
 	        }
 	
-	        // Update status message
 	        const statusMessage = document.getElementById('statusMessage');
 	        statusMessage.textContent = '스케줄이 설정되었습니다.';
 	        setTimeout(() => {
