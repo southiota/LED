@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>아이패드 전광판</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #display {
+            font-size: 4rem;
+            text-align: center;
+            white-space: pre-wrap; /* 줄바꿈과 공백을 유지합니다 */
+        }
+        #settingsPanel {
+            position: fixed;
+            top: 0;
+            left: -340px; /* 패널 너비 + 패딩 */
+            width: 300px;
+            height: 100vh;
+            background-color: #1e1e1e;
+            padding: 20px;
+            overflow-y: auto;
+            transition: left 0.3s ease-in-out;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+        #settingsToggle {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 1001;
+            background-color: #333;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: left 0.3s ease-in-out;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        #settingsToggle span {
+            width: 5px;
+            height: 5px;
+            background-color: #e0e0e0;
+            border-radius: 50%;
+            margin: 0 2px;
+            transition: background-color 0.3s ease;
+        }
+        #settingsToggle:hover span {
+            background-color: #fff;
+        }
+        .schedule {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #2a2a2a;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .row > * {
+            flex: 1;
+            margin-right: 10px;
+        }
+        .row > *:last-child {
+            margin-right: 0;
+        }
+        textarea, select, input[type="time"], input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #444;
+            border-radius: 4px;
+            background-color: #333;
+            color: #e0e0e0;
+            font-size: 14px;
+        }
+        input[type="color"] {
+            -webkit-appearance: none;
+            border: none;
+            width: 100%;
+            height: 40px;
+            cursor: pointer;
+            background-color: transparent;
+        }
+        input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+        input[type="color"]::-webkit-color-swatch {
+            border: none;
+            border-radius: 4px;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+        .effect-select, .font-select {
+            flex: 2;
+        }
+        .effect-options {
+            flex: 1;
+        }
+        .preview-button, #setScheduleButton {
+            width: 100%;
+            padding: 10px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 15px;
+        }
+        .preview-button:hover, #setScheduleButton:hover {
+            background-color: #1976D2;
+        }
+        .preset-select {
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #444;
+            background-color: #333;
+            color: #e0e0e0;
+        }
+        .font-size-input {
+            flex: 0 0 80px;
+            width: 80px;
+        }
+        .font-select {
+            flex: 1;
+            margin-right: 10px;
+        }
+        .font-settings {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #statusMessage {
+            margin-top: 15px;
+            text-align: center;
+            color: #4CAF50;
+        }
+        #fullscreenToggle {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 1001;
+            background-color: rgba(51, 51, 51, 0.7);
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.3s ease;
+        }
+        #fullscreenToggle:hover {
+            background-color: rgba(51, 51, 51, 0.9);
+        }
+        .fullscreen-icon {
+            color: #e0e0e0;
+            font-size: 20px;
+        }
+        .schedule-controls {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .schedule-controls button {
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+            margin: 0 10px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .schedule-controls button:hover {
+            background-color: #1976D2;
+        }
+        #removeScheduleButton {
+            background-color: #F44336;
+        }
+        #removeScheduleButton:hover {
+            background-color: #D32F2F;
+        }
+    </style>
+</head>
+<body>
+    <div id="display">여기에 텍스트가 표시됩니다</div>
+    
+    <button id="settingsToggle">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+    
+    <button id="fullscreenToggle">
+        <span class="fullscreen-icon">⛶</span>
+    </button>
+    
+    <div id="settingsPanel">
+        <div id="scheduleInputs"></div>
+        <div class="schedule-controls">
+            <button id="removeScheduleButton" onclick="removeSchedule()">-</button>
+            <button id="addScheduleButton" onclick="addSchedule()">+</button>
+        </div>
+        <button id="setScheduleButton" onclick="setScheduledTexts()">스케줄 설정</button>
+        <div id="statusMessage"></div>
+    </div>
+
+    <script>
+        let scheduleSettings = [];
+        let presetTexts = {
+            "봉기": "@BORNGI_OFFICIAL<br>디제이봉기",
+            "라이피": "@DJ_LIFY<br>디제이라이피",
+            "칼리": "@DJKALI92<br>디제이칼리",
+            "리제": "@LEEJE0810<br>디제이리제",
+            "마르코스": "@MARCOSJUNGLEDJ<br>멕시코 탑 디제이 (진짜로)",
+        };
+
+        let scheduleCount = 1;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM content loaded');
+            const settingsPanel = document.getElementById('settingsPanel');
+            const settingsToggle = document.getElementById('settingsToggle');
+            let isPanelOpen = false;
+
+            if (settingsToggle && settingsPanel) {
+                settingsToggle.addEventListener('click', () => {
+                    console.log('Settings toggle clicked');
+                    isPanelOpen = !isPanelOpen;
+                    settingsPanel.style.left = isPanelOpen ? '0' : '-340px'; // 패널 너비 + 패딩
+                    settingsToggle.style.left = isPanelOpen ? '320px' : '10px';
+                    settingsToggle.innerHTML = isPanelOpen ? 
+                        '&times;' : 
+                        '<span></span><span></span><span></span>';
+                });
+            } else {
+                console.error('Settings toggle or panel not found');
+            }
+
+            const fullscreenToggle = document.getElementById('fullscreenToggle');
+            if (fullscreenToggle) {
+                fullscreenToggle.addEventListener('click', toggleFullscreen);
+            }
+
+            scheduleCount = 1;
+            scheduleSettings = [{}];
+            updateScheduleInputs();
+        });
+
+        function addSchedule() {
+            const newIndex = scheduleCount;
+            const copyFromIndex = newIndex - 1;
+            scheduleCount++;
+            
+            if (copyFromIndex >= 0 && scheduleSettings[copyFromIndex]) {
+                scheduleSettings[newIndex] = JSON.parse(JSON.stringify(scheduleSettings[copyFromIndex]));
+            } else {
+                scheduleSettings[newIndex] = {};
+            }
+            
+            addScheduleInput(newIndex);
+            updateColorInput();
+        }
+
+        function removeSchedule() {
+            if (scheduleCount > 1) {
+                scheduleCount--;
+                scheduleSettings.pop(); // 마지막 설정 제거
+                updateScheduleInputs();
+            }
+        }
+
+        function updateScheduleInputs() {
+            const scheduleInputsDiv = document.getElementById('scheduleInputs');
+            scheduleInputsDiv.innerHTML = '';
+
+            for (let i = 0; i < scheduleCount; i++) {
+                addScheduleInput(i);
+            }
+            updateColorInput();
+        }
+
+        function addScheduleInput(index) {
+            const scheduleInputsDiv = document.getElementById('scheduleInputs');
+            const scheduleDiv = document.createElement('div');
+            scheduleDiv.className = 'schedule';
+            
+            const settings = scheduleSettings[index] || {};
+
+            const now = new Date();
+            const currentTime = now.toTimeString().slice(0, 5);
+
+            scheduleDiv.innerHTML = `
+                <div class="row">
+                    <select id="colorEffect${index}" onchange="showEffectOptions(${index})" class="effect-select">
+                        <option value="default" ${settings.colorEffect === 'default' ? 'selected' : ''}>기본색상</option>
+                        <option value="rainbow" ${settings.colorEffect === 'rainbow' ? 'selected' : ''}>무지개</option>
+                        <option value="blink" ${settings.colorEffect === 'blink' ? 'selected' : ''}>깜빡임</option>
+                        <option value="random" ${settings.colorEffect === 'random' ? 'selected' : ''}>랜덤</option>
+                        <option value="gradient" ${settings.colorEffect === 'gradient' ? 'selected' : ''}>그라데이션</option>
+                        <option value="breath" ${settings.colorEffect === 'breath' ? 'selected' : ''}>호흡 조명</option>
+                    </select>
+                    <div id="effectOptions${index}" class="effect-options"></div>
+                </div>
+                <div class="row">
+                    <select id="presetText${index}" onchange="loadPresetText(${index})" class="preset-select">
+                        <option value="">사전 설정 텍스트 선택</option>
+                        ${Object.keys(presetTexts).map(key => `<option value="${key}">${key}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="row">
+                    <textarea id="textInput${index}" placeholder="텍스트 입력 ${index + 1}" rows="3">${settings.text || ''}</textarea>
+                </div>
+                <div class="row">
+                    <input type="time" id="timeInput${index}" class="time-input" value="${settings.time || currentTime}" />
+                    <input type="color" id="colorInput${index}" class="color-input" value="${settings.color || '#ffffff'}" />
+                </div>
+                <div class="row font-settings">
+                    <select id="fontInput${index}" class="font-select">
+                        ${generateFontOptions(settings.font || 'Arial')}
+                    </select>
+                    <input type="number" id="fontSizeInput${index}" class="font-size-input" value="${settings.fontSize || '100'}" placeholder="폰트 크기" />
+                </div>
+                <div class="row">
+                    <button onclick="previewText(${index})" class="preview-button">미리보기</button>
+                </div>
+            `;
+
+            scheduleInputsDiv.appendChild(scheduleDiv);
+            showEffectOptions(index);
+        }
+
+        function generateFontOptions(selectedFont) {
+            const fonts = ['Arial', 'Verdana', 'Times New Roman', 'Courier New', 'Georgia', 'Malgun Gothic', 'Nanum Gothic', 'Nanum Myeongjo', 'Dotum', 'Batang'];
+            return fonts.map(font => `<option value="${font}" ${font === selectedFont ? 'selected' : ''}>${font}</option>`).join('');
+        }
+
+        function showEffectOptions(index) {
+            const effect = document.getElementById(`colorEffect${index}`).value;
+            const effectOptionsDiv = document.getElementById(`effectOptions${index}`);
+            const settings = scheduleSettings[index] || {};
+            effectOptionsDiv.innerHTML = '';
+
+            if (effect === 'blink' || effect === 'random' || effect === 'breath' || effect === 'rainbow' || effect === 'gradient') {
+                effectOptionsDiv.innerHTML = `
+                    <input type="number" id="speedInput${index}" value="${settings.speed || '500'}" min="10" style="width: 60px;" />
+                `;
+            }
+        }
+
+        function loadPresetText(index) {
+            const presetSelect = document.getElementById(`presetText${index}`);
+            const textInput = document.getElementById(`textInput${index}`);
+            const selectedPreset = presetSelect.value;
+            
+            if (selectedPreset && presetTexts[selectedPreset]) {
+                textInput.value = presetTexts[selectedPreset];
+            }
+        }
+
+        function updateColorInput() {
+            const colorInputs = document.querySelectorAll('input[type="color"]');
+            colorInputs.forEach(input => {
+                input.style.backgroundColor = input.value;
+            });
+        }
+
+        // 색상 입력 필드에 이벤트 리스너 추가
+        document.addEventListener('input', function(e) {
+            if (e.target.type === 'color') {
+                updateColorInput();
+            }
+        });
+
+        function previewText(index) {
+            const text = document.getElementById(`textInput${index}`).value;
+            const color = document.getElementById(`colorInput${index}`).value;
+            const fontSize = document.getElementById(`fontSizeInput${index}`).value;
+            const font = document.getElementById(`fontInput${index}`).value;
+            const colorOption = document.getElementById(`colorEffect${index}`).value;
+            const speedInput = document.getElementById(`speedInput${index}`);
+            const speed = speedInput ? parseInt(speedInput.value) : 500;
+
+            const display = document.getElementById('display');
+            display.innerHTML = text.replace(/\n/g, '<br>'); // 줄바꿈을 <br> 태그로 변환
+            display.style.fontSize = fontSize ? `${fontSize}px` : '2rem';
+            display.style.fontFamily = font;
+            applyColorEffect(display, colorOption, speed, color);
+        }
+
+        function applyColorEffect(display, colorOption, speed, color) {
+            // Clear any existing intervals
+            if (display.colorInterval) {
+                clearInterval(display.colorInterval);
+            }
+
+            switch (colorOption) {
+                case 'default':
+                    display.style.color = color;
+                    break;
+                case 'rainbow':
+                    let hue = 0;
+                    display.colorInterval = setInterval(() => {
+                        display.style.color = `hsl(${hue}, 100%, 50%)`;
+                        hue = (hue + 1) % 360;
+                    }, speed);
+                    break;
+                case 'blink':
+                    let isVisible = true;
+                    display.colorInterval = setInterval(() => {
+                        display.style.color = isVisible ? color : 'transparent';
+                        isVisible = !isVisible;
+                    }, speed);
+                    break;
+                case 'random':
+                    display.colorInterval = setInterval(() => {
+                        display.style.color = `#${Math.floor(Math.random() * 16777215).toString(16)}`;
+                    }, speed);
+                    break;
+                case 'gradient':
+                    let gradientHue = 0;
+                    display.colorInterval = setInterval(() => {
+                        display.style.backgroundImage = `linear-gradient(to right, hsl(${gradientHue}, 100%, 50%), hsl(${(gradientHue + 60) % 360}, 100%, 50%))`;
+                        gradientHue = (gradientHue + 1) % 360;
+                        display.style.webkitBackgroundClip = 'text';
+                        display.style.webkitTextFillColor = 'transparent';
+                    }, speed);
+                    break;
+                case 'breath':
+                    let breathHue = 0;
+                    display.colorInterval = setInterval(() => {
+                        const lightness = 50 + 30 * Math.sin(breathHue);
+                        display.style.color = `hsl(200, 100%, ${lightness}%)`;
+                        breathHue += 0.05;
+                    }, speed);
+                    break;
+            }
+        }
+
+        function saveCurrentSettings() {
+            for (let i = 0; i < scheduleCount; i++) {
+                scheduleSettings[i] = {
+                    colorEffect: document.getElementById(`colorEffect${i}`)?.value || 'default',
+                    text: document.getElementById(`textInput${i}`)?.value || '',
+                    time: document.getElementById(`timeInput${i}`)?.value || '',
+                    color: document.getElementById(`colorInput${i}`)?.value || '#ffffff',
+                    font: document.getElementById(`fontInput${i}`)?.value || 'Arial',
+                    fontSize: document.getElementById(`fontSizeInput${i}`)?.value || '100',
+                    speed: document.getElementById(`speedInput${i}`)?.value || '500'
+                };
+            }
+        }
+
+        function setScheduledTexts() {
+            saveCurrentSettings();
+            const schedules = scheduleSettings;
+
+            // Clear existing intervals
+            if (window.scheduleInterval) {
+                clearInterval(window.scheduleInterval);
+            }
+
+            // Set up new interval to check and update text
+            window.scheduleInterval = setInterval(() => {
+                const now = new Date();
+                const currentTime = now.toTimeString().slice(0, 5);
+
+                for (const schedule of schedules) {
+                    if (schedule.time === currentTime) {
+                        const display = document.getElementById('display');
+                        display.innerHTML = schedule.text.replace(/\n/g, '<br>'); // 줄바꿈을 <br> 태그로 변환
+                        display.style.fontSize = schedule.fontSize ? `${schedule.fontSize}px` : '2rem';
+                        display.style.fontFamily = schedule.font;
+                        applyColorEffect(display, schedule.colorOption, schedule.speed, schedule.color);
+                        break;
+                    }
+                }
+            }, 1000); // Check every second
+
+            // Update status message
+            const statusMessage = document.getElementById('statusMessage');
+            statusMessage.textContent = '스케줄이 설정되었습니다.';
+            setTimeout(() => {
+                statusMessage.textContent = '';
+            }, 3000);
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                if (document.documentElement.requestFullscreen) {
+                    document.documentElement.requestFullscreen();
+                } else if (document.documentElement.mozRequestFullScreen) { // Firefox
+                    document.documentElement.mozRequestFullScreen();
+                } else if (document.documentElement.webkitRequestFullscreen) { // Chrome, Safari and Opera
+                    document.documentElement.webkitRequestFullscreen();
+                } else if (document.documentElement.msRequestFullscreen) { // IE/Edge
+                    document.documentElement.msRequestFullscreen();
+                }
+                document.getElementById('fullscreenToggle').querySelector('.fullscreen-icon').textContent = '⛶';
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.mozCancelFullScreen) { // Firefox
+                    document.mozCancelFullScreen();
+                } else if (document.webkitExitFullscreen) { // Chrome, Safari and Opera
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) { // IE/Edge
+                    document.msExitFullscreen();
+                }
+                document.getElementById('fullscreenToggle').querySelector('.fullscreen-icon').textContent = '⛶';
+            }
+        }
+
+        // 전체화면 변경 감지
+        document.addEventListener('fullscreenchange', updateFullscreenButton);
+        document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
+        document.addEventListener('mozfullscreenchange', updateFullscreenButton);
+        document.addEventListener('MSFullscreenChange', updateFullscreenButton);
+
+        function updateFullscreenButton() {
+            const fullscreenIcon = document.getElementById('fullscreenToggle').querySelector('.fullscreen-icon');
+            if (document.fullscreenElement) {
+                fullscreenIcon.textContent = '⛶';
+            } else {
+                fullscreenIcon.textContent = '⛶';
+            }
+        }
+
+        // Initialize the page
+        updateScheduleInputs();
+    </script>
+</body>
+</html>
