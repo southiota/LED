@@ -235,6 +235,45 @@
     </div>
 
     <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log('DOM content loaded');
+        const settingsPanel = document.getElementById('settingsPanel');
+        const settingsToggle = document.getElementById('settingsToggle');
+        let isPanelOpen = false;
+
+        if (settingsToggle && settingsPanel) {
+            settingsToggle.addEventListener('click', () => {
+                console.log('Settings toggle clicked');
+                isPanelOpen = !isPanelOpen;
+                settingsPanel.style.left = isPanelOpen ? '0' : '-340px'; // 패널 너비 + 패딩
+                settingsToggle.style.left = isPanelOpen ? '320px' : '10px';
+                settingsToggle.innerHTML = isPanelOpen ? 
+                    '&times;' : 
+                    '<span></span><span></span><span></span>';
+            });
+        } else {
+            console.error('Settings toggle or panel not found');
+        }
+
+        // 여기 추가: 터치 이벤트 방지 코드
+        document.addEventListener('touchstart', function (event) {
+            if (settingsPanel && settingsToggle) {
+                if (settingsPanel.style.left !== '0px') {
+                    event.preventDefault();
+                }
+            }
+        }, { passive: false });
+
+        const fullscreenToggle = document.getElementById('fullscreenToggle');
+        if (fullscreenToggle) {
+            fullscreenToggle.addEventListener('click', toggleFullscreen);
+        }
+
+        scheduleCount = 1;
+        scheduleSettings = [{}];
+        updateScheduleInputs();
+    });
+
         let scheduleSettings = [];
         let presetTexts = {
             "봉기": "@BORNGI_OFFICIAL<br>디제이봉기",
