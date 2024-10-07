@@ -118,10 +118,10 @@
         .effect-options {
             flex: 1;
         }
-        .preview-button, #setScheduleButton {
+        .preview-button, .save-button, #setScheduleButton {
             width: 100%;
             padding: 10px;
-            background-color: #2196F3;
+            background-color: #333333;
             color: white;
             border: none;
             border-radius: 4px;
@@ -129,8 +129,8 @@
             transition: background-color 0.3s ease;
             margin-top: 15px;
         }
-        .preview-button:hover, #setScheduleButton:hover {
-            background-color: #1976D2;
+        .preview-button:hover, .save-button:hover, #setScheduleButton:hover {
+            background-color: #000000;
         }
         .preset-select {
             width: 100%;
@@ -155,7 +155,7 @@
             align-items: center;
         }
         #statusMessage {
-            margin-top: 15px;
+            margin-top: 2px;
             text-align: center;
             color: #4CAF50;
         }
@@ -189,26 +189,38 @@
             margin-top: 20px;
         }
         .schedule-controls button {
-            width: 40px;
+            width: 50%;
             height: 40px;
             font-size: 20px;
-            margin: 0 10px;
-            background-color: #2196F3;
+            margin: 0 5px;
+            background-color: #333333;
             color: white;
             border: none;
-            border-radius: 50%;
+            border-radius: 5px;
             cursor: pointer;
             transition: background-color 0.3s ease;
         }
         .schedule-controls button:hover {
-            background-color: #1976D2;
+            background-color: #000033;
         }
         #removeScheduleButton {
-            background-color: #F44336;
+            background-color: #333333;
         }
         #removeScheduleButton:hover {
-            background-color: #D32F2F;
+            background-color: #330000;
         }
+
+	/* 저장 상태 메시지 색상 정의 */
+	.unsaved {
+		color: #bb0000; 
+	}
+	.saved {
+		color: #ffffff; 
+	}
+	.default {
+        	color: #bb0000; 
+	}
+
     </style>
 </head>
 <body>
@@ -230,12 +242,23 @@
             <button id="removeScheduleButton" onclick="removeSchedule()">-</button>
             <button id="addScheduleButton" onclick="addSchedule()">+</button>
         </div>
-        <button id="setScheduleButton" onclick="setScheduledTexts()">스케줄 설정</button>
+        <button id="setScheduleButton" onclick="setScheduledTexts()">스케줄 일괄 저장</button>
         <div id="statusMessage"></div>
     </div>
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
+
+//-----------------------
+        for (let i = 0; i < scheduleCount; i++) {
+            const statusMessage = document.getElementById(`saveStatusMessage${i}`);
+            if (statusMessage) {
+                statusMessage.textContent = '저장되지 않음';
+                statusMessage.classList.add('unsaved'); // '저장되지 않음' 색상 설정
+            }
+        }
+//-----------------------
+
         console.log('DOM content loaded');
         const settingsPanel = document.getElementById('settingsPanel');
         const settingsToggle = document.getElementById('settingsToggle');
@@ -348,55 +371,75 @@
             updateColorInput();
         }
 
-        function addScheduleInput(index) {
-            const scheduleInputsDiv = document.getElementById('scheduleInputs');
-            const scheduleDiv = document.createElement('div');
-            scheduleDiv.className = 'schedule';
-            
-            const settings = scheduleSettings[index] || {};
+	function addScheduleInput(index) {
+	        const scheduleInputsDiv = document.getElementById('scheduleInputs');
+	        const scheduleDiv = document.createElement('div');
+	        scheduleDiv.className = 'schedule';
+	        
+	        const settings = scheduleSettings[index] || {};
+	        const now = new Date();
+	        const currentTime = now.toTimeString().slice(0, 5);
+	    
+	        scheduleDiv.innerHTML = `
+	            <div class="row">
+	                <select id="colorEffect${index}" onchange="showEffectOptions(${index}); markUnsaved(${index})" class="effect-select">
+	                    <option value="default" ${settings.colorEffect === 'default' ? 'selected' : ''}>기본색상</option>
+	                    <option value="rainbow" ${settings.colorEffect === 'rainbow' ? 'selected' : ''}>무지개</option>
+	                    <option value="blink" ${settings.colorEffect === 'blink' ? 'selected' : ''}>깜빡임</option>
+	                    <option value="random" ${settings.colorEffect === 'random' ? 'selected' : ''}>랜덤</option>
+	                    <option value="gradient" ${settings.colorEffect === 'gradient' ? 'selected' : ''}>그라데이션</option>
+	                    <option value="breath" ${settings.colorEffect === 'breath' ? 'selected' : ''}>호흡 조명</option>
+	                </select>
+	                <div id="effectOptions${index}" class="effect-options"></div>
+	            </div>
+	            <div class="row">
+	                <select id="presetText${index}" onchange="loadPresetText(${index}); markUnsaved(${index})" class="preset-select">
+	                    <option value="">사전 설정 텍스트 선택</option>
+	                    ${Object.keys(presetTexts).map(key => `<option value="${key}">${key}</option>`).join('')}
+	                </select>
+	            </div>
+	            <div class="row">
+	                <textarea id="textInput${index}" placeholder="텍스트 입력 ${index + 1}" rows="3" oninput="markUnsaved(${index})">${settings.text || ''}</textarea>
+	            </div>
+	            <div class="row">
+	                <input type="time" id="timeInput${index}" class="time-input" value="${settings.time || currentTime}" onchange="markUnsaved(${index})" />
+	                <input type="color" id="colorInput${index}" class="color-input" value="${settings.color || '#ffffff'}" onchange="markUnsaved(${index})" />
+	            </div>
+	            <div class="row font-settings">
+	                <select id="fontInput${index}" class="font-select" onchange="markUnsaved(${index})">
+	                    ${generateFontOptions(settings.font || 'Georgia')}
+	                </select>
+	                <input type="number" id="fontSizeInput${index}" class="font-size-input" value="${settings.fontSize || '110'}" placeholder="폰트 크기" onchange="markUnsaved(${index})" 	/>
+	            </div>
+	            <div class="row">
+	                <button onclick="saveSettings(${index})" class="save-button">저장</button>
+	                <button onclick="previewText(${index})" class="preview-button">미리보기</button>
+	            </div>
+	            <div id="saveStatusMessage${index}" class="unsaved">저장되지 않음</div>
+	        `;
+	    
+	        scheduleInputsDiv.appendChild(scheduleDiv);
+	        showEffectOptions(index);
+	 }
 
-            const now = new Date();
-            const currentTime = now.toTimeString().slice(0, 5);
 
-            scheduleDiv.innerHTML = `
-                <div class="row">
-                    <select id="colorEffect${index}" onchange="showEffectOptions(${index})" class="effect-select">
-                        <option value="default" ${settings.colorEffect === 'default' ? 'selected' : ''}>기본색상</option>
-                        <option value="rainbow" ${settings.colorEffect === 'rainbow' ? 'selected' : ''}>무지개</option>
-                        <option value="blink" ${settings.colorEffect === 'blink' ? 'selected' : ''}>깜빡임</option>
-                        <option value="random" ${settings.colorEffect === 'random' ? 'selected' : ''}>랜덤</option>
-                        <option value="gradient" ${settings.colorEffect === 'gradient' ? 'selected' : ''}>그라데이션</option>
-                        <option value="breath" ${settings.colorEffect === 'breath' ? 'selected' : ''}>호흡 조명</option>
-                    </select>
-                    <div id="effectOptions${index}" class="effect-options"></div>
-                </div>
-                <div class="row">
-                    <select id="presetText${index}" onchange="loadPresetText(${index})" class="preset-select">
-                        <option value="">사전 설정 텍스트 선택</option>
-                        ${Object.keys(presetTexts).map(key => `<option value="${key}">${key}</option>`).join('')}
-                    </select>
-                </div>
-                <div class="row">
-                    <textarea id="textInput${index}" placeholder="텍스트 입력 ${index + 1}" rows="3">${settings.text || ''}</textarea>
-                </div>
-                <div class="row">
-                    <input type="time" id="timeInput${index}" class="time-input" value="${settings.time || currentTime}" />
-                    <input type="color" id="colorInput${index}" class="color-input" value="${settings.color || '#ffffff'}" />
-                </div>
-                <div class="row font-settings">
-                    <select id="fontInput${index}" class="font-select">
-                        ${generateFontOptions(settings.font || 'Arial')}
-                    </select>
-                    <input type="number" id="fontSizeInput${index}" class="font-size-input" value="${settings.fontSize || '100'}" placeholder="폰트 크기" />
-                </div>
-                <div class="row">
-                    <button onclick="previewText(${index})" class="preview-button">미리보기</button>
-                </div>
-            `;
+//-------------------
+	function saveSettings(index) {
+		saveCurrentSettings();
+		const statusMessage = document.getElementById(`saveStatusMessage${index}`);
+		statusMessage.textContent = '저장됨';
+		statusMessage.classList.remove('unsaved');
+		statusMessage.classList.add('saved');
+	}
 
-            scheduleInputsDiv.appendChild(scheduleDiv);
-            showEffectOptions(index);
-        }
+	function markUnsaved(index) {
+		const statusMessage = document.getElementById(`saveStatusMessage${index}`);
+		statusMessage.textContent = '저장되지 않음';
+	        statusMessage.classList.remove('saved');
+	        statusMessage.classList.add('unsaved');
+	}
+
+//-------------------
 
         function generateFontOptions(selectedFont) {
             const fonts = ['Arial', 'Verdana', 'Times New Roman', 'Courier New', 'Georgia', 'Malgun Gothic', 'Nanum Gothic', 'Nanum Myeongjo', 'Dotum', 'Batang'];
@@ -411,7 +454,7 @@
 
             if (effect === 'blink' || effect === 'random' || effect === 'breath' || effect === 'rainbow' || effect === 'gradient') {
                 effectOptionsDiv.innerHTML = `
-                    <input type="number" id="speedInput${index}" value="${settings.speed || '500'}" min="10" style="width: 60px;" />
+                    <input type="number" id="speedInput${index}" value="${settings.speed || '10'}" min="10" style="width: 60px;" />
                 `;
             }
         }
@@ -447,12 +490,14 @@
             const font = document.getElementById(`fontInput${index}`).value;
             const colorOption = document.getElementById(`colorEffect${index}`).value;
             const speedInput = document.getElementById(`speedInput${index}`);
-            const speed = speedInput ? parseInt(speedInput.value) : 500;
+            const speed = speedInput ? parseInt(speedInput.value) : 10;
 
             const display = document.getElementById('display');
             display.innerHTML = text.replace(/\n/g, '<br>'); // 줄바꿈을 <br> 태그로 변환
             display.style.fontSize = fontSize ? `${fontSize}px` : '2rem';
             display.style.fontFamily = font;
+            display.style.fontWeight = 'bold'; // 텍스트를 굵게
+            display.style.transform = 'scaleX(0.7)'; // 장평을 85으로 줄임
             applyColorEffect(display, colorOption, speed, color);
         }
 
@@ -519,39 +564,49 @@
             }
         }
 
-        function setScheduledTexts() {
-            saveCurrentSettings();
-            const schedules = scheduleSettings;
-
-            // Clear existing intervals
-            if (window.scheduleInterval) {
-                clearInterval(window.scheduleInterval);
-            }
-
-            // Set up new interval to check and update text
-            window.scheduleInterval = setInterval(() => {
-                const now = new Date();
-                const currentTime = now.toTimeString().slice(0, 5);
-
-                for (const schedule of schedules) {
-                    if (schedule.time === currentTime) {
-                        const display = document.getElementById('display');
-                        display.innerHTML = schedule.text.replace(/\n/g, '<br>'); // 줄바꿈을 <br> 태그로 변환
-                        display.style.fontSize = schedule.fontSize ? `${schedule.fontSize}px` : '2rem';
-                        display.style.fontFamily = schedule.font;
-                        applyColorEffect(display, schedule.colorOption, schedule.speed, schedule.color);
-                        break;
-                    }
-                }
-            }, 1000); // Check every second
-
-            // Update status message
-            const statusMessage = document.getElementById('statusMessage');
-            statusMessage.textContent = '스케줄이 설정되었습니다.';
-            setTimeout(() => {
-                statusMessage.textContent = '';
-            }, 3000);
-        }
+	function setScheduledTexts() {
+	        saveCurrentSettings();
+	        const schedules = scheduleSettings;
+	
+	        // Clear existing intervals
+	        if (window.scheduleInterval) {
+	            clearInterval(window.scheduleInterval);
+	        }
+	
+	        // Set up new interval to check and update text
+	        window.scheduleInterval = setInterval(() => {
+	            const now = new Date();
+	            const currentTime = now.toTimeString().slice(0, 5);
+	
+	            for (const schedule of schedules) {
+	                if (schedule.time === currentTime) {
+	                    const display = document.getElementById('display');
+	                    display.innerHTML = schedule.text.replace(/\n/g, '<br>'); // 줄바꿈을 <br> 태그로 변환
+	                    display.style.fontSize = schedule.fontSize ? `${schedule.fontSize}px` : '2rem';
+	                    display.style.fontFamily = schedule.font;
+	                    applyColorEffect(display, schedule.colorOption, schedule.speed, schedule.color);
+	                    break;
+	                }
+	            }
+	        }, 1000); // Check every second
+	
+	        // Update all save status messages to '저장됨'
+	        for (let i = 0; i < scheduleCount; i++) {
+	            const statusMessage = document.getElementById(`saveStatusMessage${i}`);
+	            if (statusMessage) {
+	                statusMessage.textContent = '저장됨';
+	                statusMessage.classList.remove('unsaved');
+	                statusMessage.classList.add('saved');
+	            }
+	        }
+	
+	        // Update status message
+	        const statusMessage = document.getElementById('statusMessage');
+	        statusMessage.textContent = '스케줄이 설정되었습니다.';
+	        setTimeout(() => {
+	            statusMessage.textContent = '';
+	        }, 3000);
+	}
 
         function toggleFullscreen() {
             if (!document.fullscreenElement) {
