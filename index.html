@@ -279,13 +279,13 @@
         }
 
         // 여기 추가: 터치 이벤트 방지 코드
-        document.addEventListener('touchstart', function (event) {
-            if (settingsPanel && settingsToggle) {
-                if (settingsPanel.style.left !== '0px') {
-                    event.preventDefault();
-                }
-            }
-        }, { passive: false });
+//	document.addEventListener('touchstart', function (event) {
+//	    if (settingsPanel && settingsToggle) {
+//	        if (settingsPanel.style.left !== '0px') {
+//	            event.preventDefault();
+//	        }
+//	    }
+//	}, { passive: false });
 
         const fullscreenToggle = document.getElementById('fullscreenToggle');
         if (fullscreenToggle) {
